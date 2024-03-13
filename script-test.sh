@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -e
+debugMode="debug"
+
+USAGE="gh cpissues <git-repo> --label <label>"
+
+# Parse Repo argument
+if [ -z "$1" ]
+then
+ echo $USAGE
+ exit 1
+fi
+
+TEMPLATEREPO="$1"
+shift
+
+# Initialize label variable
+LABEL=""
+
+# Parse remaining arguments
+while [ $# -gt 0 ]; do
+ arg="$1"
+ case "$arg" in
+    --label)
+      if [ -n "$2" ]; then
+        LABEL="$2"
+        shift
+      else
+        echo "--label cannot be empty"
+        exit 1
+      fi
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $arg"
+      exit 1
+      ;;
+ esac
+done
+
+# Check if label is set
+if [[ -z "$LABEL" ]]; then
+ echo $USAGE
+ exit 1
+fi
+
+# Define temp files
+REPOROOT=$(git rev-parse --show-toplevel)
+THISCOMMIT=$(git rev-parse HEAD)
+TEMPLATEISSUES=$REPOROOT/$THISCOMMIT-issues.json 
+TMPFILE=$REPOROOT/$THISCOMMIT-body.tmp
+
+echo "Copying issues labeled \"$LABEL\" from $TEMPLATEREPO"
+
+gh issue list --search "sort:created-asc" --label $LABEL -R $TEMPLATEREPO --json 'title,body' > $TEMPLATEISSUES
+
+# Check if issues were found
+if jq -e '. | length == 0' "$TEMPLATEISSUES" > /dev/null; then
+ echo "No issues found in $TEMPLATEREPO with label \"$LABEL\""
+fi
+
+for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
+    _jq() { 
+     echo ${row} | base64 --decode | jq -r ${1}
+    }
+   TITLE=$(_jq '.title' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+   
+   if gh issue list | grep -e ".*$TITLE.*" >/dev/null ; then
+     echo "Issue already exitst: ($TITLE)"
+   else
+     echo Copying issue: \'$TITLE\'
+     echo $(_jq '.body') > $TMPFILE
+     cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
+     eval $cmd
+     # Clean up
+     if [[ "$debugMode" != "debug" ]]; then
+      rm $TMPFILE
+    fi
+
+   fi
+
+done
+
+# Clean up
+#eval rm $TEMPLATEISSUES
