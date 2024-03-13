@@ -69,7 +69,7 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
      echo "Issue already exitst: ($TITLE)"
    else
      echo Copying issue: \'$TITLE\'
-     echo $(_jq '.body') > $TMPFILE
+     echo $(_jq '.body') | jq -rRs . > $TMPFILE
      cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
      eval $cmd
      # Clean up
