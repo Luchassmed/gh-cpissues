@@ -75,8 +75,8 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
         /```$/ { in_code_block=0; print; next }
         {
             if (in_code_block) {
-                gsub(/\n/, "INVISIBLE_NEWLINE");
-                gsub(/ /, "INVISIBLE_SPACE");
+                gsub(/\n/, " ");
+                gsub(/ /, " ");
             }
             print;
         }
