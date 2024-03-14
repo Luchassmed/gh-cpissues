@@ -61,31 +61,47 @@ fi
 
 for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
     _jq() { 
-     echo ${row} | base64 --decode | jq -r ${1}
+        echo ${row} | base64 --decode | jq -r ${1}
     }
-   TITLE=$(_jq '.title' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-   
-   if gh issue list | grep -e ".*$TITLE.*" >/dev/null ; then
-     echo "Issue already exists: ($TITLE)"
-   else
-     echo Copying issue: \'$TITLE\'
-     # Pre-process the issue body to replace \n with invisible element and spaces with invisible element
-     # but only outside of code blocks initiated with a single asterisk
-     echo $(_jq '.body' | awk '
-        /\```/ { inCodeBlock = !inCodeBlock; print; next }
-        !inCodeBlock { gsub(/\n/, " "); gsub(/ /, " "); print }
-        inCodeBlock { print }
-     ') > $TMPFILE
-     cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
-     eval $cmd
-     # Clean up
-     if [[ "$debugMode" != "debug" ]]; then
-      rm $TMPFILE
+    TITLE=$(_jq '.title' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    
+    if gh issue list | grep -e ".*$TITLE.*" >/dev/null ; then
+        echo "Issue already exists: ($TITLE)"
+    else
+        echo Copying issue: \'$TITLE\'
+        
+        # Pre-process the issue body to replace \n and spaces inside code blocks
+        BODY=$(_jq '.body')
+        CODE_BLOCK_FOUND=false
+        PROCESSED_BODY=""
+        IFS=$'\n' read -r -d '' -a lines <<< "$BODY"
+        for line in "${lines[@]}"; do
+            if [[ $line =~ ^\`\`\` ]]; then
+                CODE_BLOCK_FOUND=true
+            elif [[ $line =~ ^\`\`\` ]]; then
+                CODE_BLOCK_FOUND=false
+            fi
+            
+            if $CODE_BLOCK_FOUND; then
+                # Preserve whitespace inside code blocks
+                PROCESSED_BODY+="$line"$'\n'
+            else
+                # Replace newlines and spaces outside code blocks
+                PROCESSED_BODY+=$(echo "$line" | sed 's/\n/ /g' | sed 's/ / /g')$'\n'
+            fi
+        done
+        
+        echo "$PROCESSED_BODY" > $TMPFILE
+        cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
+        eval $cmd
+        
+        # Clean up
+        if [[ "$debugMode" != "debug" ]]; then
+            rm $TMPFILE
+        fi
     fi
-
-   fi
-
 done
+
 
 # Clean up
 #eval rm $TEMPLATEISSUES
