@@ -61,26 +61,25 @@ fi
 
 for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
     _jq() { 
-     echo ${row} | base64 --decode | jq -r ${1}
+        echo ${row} | base64 --decode | jq -r ${1}
     }
-   TITLE=$(_jq '.title' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    TITLE=$(_jq '.title' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
    
-   if gh issue list | grep -e ".*$TITLE.*" >/dev/null ; then
-     echo "Issue already exists: ($TITLE)"
-   else
-     echo Copying issue: \'$TITLE\'
-     # Pre-process the issue body to replace \n with <br> and spaces with &nbsp;
-     echo $(_jq '.body' | sed 's/\n/<br>/g' | sed 's/ /&nbsp;/g') > $TMPFILE
-     cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
-     eval $cmd
-     # Clean up
-     if [[ "$debugMode" != "debug" ]]; then
-      rm $TMPFILE
+    if gh issue list | grep -e ".*$TITLE.*" >/dev/null ; then
+        echo "Issue already exists: ($TITLE)"
+    else
+        echo Copying issue: \'$TITLE\'
+        # Save the original body content without modification
+        _jq '.body' | base64 --decode > $TMPFILE
+        cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
+        eval $cmd
+        # Clean up
+        if [[ "$debugMode" != "debug" ]]; then
+            rm $TMPFILE
+        fi
     fi
-
-   fi
-
 done
+
 
 # Clean up
 #eval rm $TEMPLATEISSUES
