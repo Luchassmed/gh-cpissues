@@ -69,8 +69,8 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
      echo "Issue already exists: ($TITLE)"
    else
      echo Copying issue: \'$TITLE\'
-     # Pre-process the issue body to replace \n with <br> and spaces with &nbsp;
-     echo $(_jq '.body' | sed 's/\n/             /g' | sed 's/ /             /g') > $TMPFILE
+     # Pre-process the issue body to replace \n with invisible element and spaces with invisible element
+     echo $(_jq '.body' | sed 's/\n/ /g' | sed 's/ / /g') > $TMPFILE
      cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
      eval $cmd
      # Clean up
