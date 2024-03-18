@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -e
-#IF YOU WANT TO DEBUG THE SCRIPT, SET debugMode="debug" (otherwise, set it to "release")
 debugMode="debug"
 
 USAGE="gh cpissues <git-repo> --label <label>"
@@ -69,15 +68,17 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
         echo "Issue already exists: ($TITLE)"
     else
         echo Copying issue: \'$TITLE\'
-        # Pre-process the issue body to replace \n and spaces with invisible elements only inside code blocks
+        # Pre-process the issue body to preserve whitespace only inside code blocks
         echo $(_jq '.body' | awk '
             /^\`\`\`/ { code_block=!code_block; print; next }
             {
                 if (code_block) {
+                    print;
+                } else {
                     gsub(/\n/, " ");
                     gsub(/ /, " ");
+                    print;
                 }
-                print;
             }
         ') > $TMPFILE
         cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
