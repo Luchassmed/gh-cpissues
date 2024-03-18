@@ -73,10 +73,10 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
             /^\`\`\`/ { code_block=!code_block; print; next }
             {
                 if (code_block) {
-                    print;
-                } else {
                     gsub(/\n/, " ");
                     gsub(/ /, " ");
+                    print;
+                } else {
                     print;
                 }
             }
