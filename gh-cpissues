@@ -73,19 +73,19 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
 echo $(_jq '.body' | awk '
     {
         # If the line starts with three backticks and in_code_block is false, set in_code_block to true
-        if ($0 ~ /^```/ && !in_code_block) {
+        if ($0 ~ /^[[:space:]]*```[[:space:]]*$/ && !in_code_block) {
             in_code_block = 1;
             print;
             next;
         }
         # If the line starts with three backticks and in_code_block is true, set in_code_block to false
-        if ($0 ~ /^```/ && in_code_block) {
+        if ($0 ~ /^[[:space:]]*```[[:space:]]*$/ && in_code_block) {
             in_code_block = 0;
             print;
             next;
         }
-        # If in_code_block is true or if the line contains only whitespace, replace spaces with non-breaking spaces
-        if (in_code_block || $0 ~ /^[[:space:]]*$/) {
+        # If in_code_block is true, replace spaces with non-breaking spaces
+        if (in_code_block) {
             gsub(/ /, " ");
         }
         print;
