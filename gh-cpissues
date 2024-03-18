@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
-debugMode="debug"
+#IF YOU WANT TO DEBUG THE SCRIPT, SET debugMode="debug" (otherwise, set it to "release")
+debugMode="release"
 
 USAGE="gh cpissues <git-repo> --label <label>"
 
@@ -58,8 +59,7 @@ if jq -e '. | length == 0' "$TEMPLATEISSUES" > /dev/null; then
     echo "No issues found in $TEMPLATEREPO with label \"$LABEL\""
 fi
 
-# Use while read loop to process each line of the JSON file
-while IFS= read -r row; do
+for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
     _jq() { 
         echo ${row} | base64 --decode | jq -r ${1}
     }
@@ -69,17 +69,15 @@ while IFS= read -r row; do
         echo "Issue already exists: ($TITLE)"
     else
         echo Copying issue: \'$TITLE\'
-        # Pre-process the issue body to preserve whitespace only inside code blocks
+        # Pre-process the issue body to replace \n and spaces with invisible elements only inside code blocks
         echo $(_jq '.body' | awk '
-            /^\`\`\`/ { code_block=!code_block; print; next }
+            /^```/ { in_code_block=!in_code_block; print; next }
             {
-                if (code_block) {
+                if (in_code_block) {
                     gsub(/\n/, " ");
                     gsub(/ /, " ");
-                    print;
-                } else {
-                    print;
                 }
+                print;
             }
         ') > $TMPFILE
         cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
@@ -89,7 +87,9 @@ while IFS= read -r row; do
             rm $TMPFILE
         fi
     fi
-done < "$TEMPLATEISSUES"
+done
 
 # Clean up
-#eval rm $TEMPLATEISSUES
+if [[ "$debugMode" != "debug" ]]; then
+eval rm $TEMPLATEISSUES
+fi
