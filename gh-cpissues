@@ -58,7 +58,8 @@ if jq -e '. | length == 0' "$TEMPLATEISSUES" > /dev/null; then
     echo "No issues found in $TEMPLATEREPO with label \"$LABEL\""
 fi
 
-for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
+# Use while read loop to process each line of the JSON file
+while IFS= read -r row; do
     _jq() { 
         echo ${row} | base64 --decode | jq -r ${1}
     }
@@ -88,7 +89,7 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
             rm $TMPFILE
         fi
     fi
-done
+done < "$TEMPLATEISSUES"
 
 # Clean up
 #eval rm $TEMPLATEISSUES
