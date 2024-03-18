@@ -84,8 +84,8 @@ echo $(_jq '.body' | awk '
             print;
             next;
         }
-        # If in_code_block is true, replace spaces with non-breaking spaces
-        if (in_code_block) {
+        # If in_code_block is true or if the line contains only whitespace, replace spaces with non-breaking spaces
+        if (in_code_block || $0 ~ /^[[:space:]]*$/) {
             gsub(/ /, " ");
         }
         print;
