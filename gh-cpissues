@@ -72,38 +72,26 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
 # Pre-process the issue body to replace spaces with non-breaking spaces only inside code blocks
 echo $(_jq '.body' | awk '
     {
-        # If the line starts with backticks and in_code_block is false, set in_code_block to true
+        # If the line starts with triple backticks and in_code_block is false, set in_code_block to true
         if ($0 ~ /^[[:space:]]*```[[:space:]]*$/ && !in_code_block) {
             in_code_block = 1;
             print;
             next;
         }
-        # If the line starts with backticks and in_code_block is true, set in_code_block to false
+        # If the line starts with triple backticks and in_code_block is true, set in_code_block to false
         if ($0 ~ /^[[:space:]]*```[[:space:]]*$/ && in_code_block) {
             in_code_block = 0;
             print;
             next;
         }
-        # If the line starts with backticks and in_code_block is false, set in_code_block to true
-        if ($0 ~ /^[[:space:]]*``[[:space:]]*$/ && !in_code_block) {
+        # If the line starts with four spaces and in_code_block is false, set in_code_block to true
+        if ($0 ~ /^[[:space:]]{4}/ && !in_code_block) {
             in_code_block = 1;
             print;
             next;
         }
-        # If the line starts with backticks and in_code_block is true, set in_code_block to false
-        if ($0 ~ /^[[:space:]]*``[[:space:]]*$/ && in_code_block) {
-            in_code_block = 0;
-            print;
-            next;
-        }
-        # If the line starts with a single backtick and in_code_block is false, set in_code_block to true
-        if ($0 ~ /^[[:space:]]*`[[:space:]]*$/ && !in_code_block) {
-            in_code_block = 1;
-            print;
-            next;
-        }
-        # If the line starts with a single backtick and in_code_block is true, set in_code_block to false
-        if ($0 ~ /^[[:space:]]*`[[:space:]]*$/ && in_code_block) {
+        # If the line is empty and in_code_block is true, set in_code_block to false
+        if ($0 ~ /^[[:space:]]*$/ && in_code_block) {
             in_code_block = 0;
             print;
             next;
