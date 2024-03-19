@@ -98,16 +98,16 @@ echo $(_jq '.body' | awk '
             print;
             next;
         }
-        # If in_code_block is true, print the line as is without any modification
+        # If in_code_block is true, replace leading spaces with non-breaking spaces
         if (in_code_block) {
+            gsub(/^ +/, "");
             print;
         } else {
-            # If in_code_block is false, replace leading spaces with non-breaking spaces
-            gsub(/^[[:space:]]+/, function(s) { return gensub(/ /, " ", "g", s) });
             print;
         }
     }
 ') > $TMPFILE
+
 
         cmd="gh issue create --title \"$(_jq '.title')\" --body-file $TMPFILE"
         eval $cmd
