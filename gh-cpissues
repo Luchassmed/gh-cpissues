@@ -69,7 +69,7 @@ for row in $(cat $TEMPLATEISSUES | jq -r '.[] | @base64'); do
         echo "Issue already exists: ($TITLE)"
     else
         echo Copying issue: \'$TITLE\'
-# Pre-process the issue body to replace spaces with non-breaking spaces only inside code blocks
+# Pre-process the issue body to preserve whitespace characters inside code blocks
 echo $(_jq '.body' | awk '
     {
         # If the line starts with triple backticks and in_code_block is false, set in_code_block to true
@@ -84,9 +84,11 @@ echo $(_jq '.body' | awk '
             print;
             next;
         }
-        # If the line starts with four spaces and in_code_block is false, set in_code_block to true
-        if ($0 ~ /^[[:space:]]{4}/ && !in_code_block) {
+        # If the line starts with four spaces or a tab and in_code_block is false, set in_code_block to true
+        if (($0 ~ /^[[:space:]]{4}/ || $0 ~ /^\t/) && !in_code_block) {
             in_code_block = 1;
+            # Remove leading whitespace characters (spaces and tabs) for the first line of the code block
+            sub(/^[[:space:]]*/, "");
             print;
             next;
         }
@@ -96,11 +98,14 @@ echo $(_jq '.body' | awk '
             print;
             next;
         }
-        # If in_code_block is true, replace spaces with non-breaking spaces
+        # If in_code_block is true, print the line as is without any modification
         if (in_code_block) {
-            gsub(/ /, " ");
+            print;
+        } else {
+            # If in_code_block is false, replace leading spaces with non-breaking spaces
+            gsub(/^[[:space:]]+/, function(s) { return gensub(/ /, " ", "g", s) });
+            print;
         }
-        print;
     }
 ') > $TMPFILE
 
