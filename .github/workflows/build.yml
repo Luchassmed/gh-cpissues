@@ -11,5 +11,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2 
+
+      - name: Set execute permissions
+        run: chmod +x ./test/test.sh
+
+      # Run the script
       - name: Run script
         run: ./test/test.sh
