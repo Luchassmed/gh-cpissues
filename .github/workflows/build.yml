@@ -17,4 +17,4 @@ jobs:
 
       # Run the script
       - name: Run script
-        run: ./test/test.sh
+        run: ./test/test.bats
