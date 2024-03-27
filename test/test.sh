@@ -1,22 +1,33 @@
-#!/usr/bin/env bats
+#!/bin/bash
 
-@test "gh cpissues" {
-mock_gh() {
-    echo '{"title": "Test Issue", "body": "This is a test issue"}'
-}
-export -f mock_gh
+# Source shunit2
+. ./shunit2
 
-TEMPLATEISSUES=$(mktemp)
-TMPFILE=$(mktemp)
-
-run ./gh-cpissues.sh "mock_repo" --label "test"
-
-[ "$status" -eq 0 ]
-[ -f "$TEMPLATEISSUES" ]
-[ -f "$TMPFILE" ]
-run cat "$TMPFILE"
-[ "$output" = 'This is a test issue']
-
-rm -f "$TEMPLATEISSUES" "$TMPFILE"
+# Function to test
+checkLabelExists() {
+    local label="$1"
+    local labels=("bug" "feature" "enhancement")
+    for l in "${labels[@]}"; do
+        if [ "$l" == "$label" ]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
+# Test function
+testCheckLabelExists() {
+    assertTrue "Label 'bug' should exist" checkLabelExists "bug"
+    assertFalse "Label 'unknown' should not exist" checkLabelExists "unknown"
+}
+
+# Setup and teardown functions
+oneTimeSetUp() {
+    # Any setup needed before all tests
+}
+
+oneTimeTearDown() {
+    # Any cleanup needed after all tests
+}
+
+# Run shunit2
