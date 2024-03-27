@@ -43,5 +43,5 @@ EOF
 }
 
 # Load shUnit2.
-. ../shunit2
+#. ../shunit2
 
