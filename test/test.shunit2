@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 . shunit2/src/shunit2
 
 test_gh_cpissues() {
