@@ -42,5 +42,3 @@ EOF
   assertTrue "Expected file to exist" "[ -f /path/to/repo/commit_hash-body.tmp ]"
 }
 
-# Run the tests
-. shunit2/src/shunit2
