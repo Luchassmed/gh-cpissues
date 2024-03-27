@@ -1,5 +1,4 @@
 #!/bin/sh
-. shunit2/src/shunit2
 
 test_gh_cpissues() {
   # Mock the necessary commands for testing
