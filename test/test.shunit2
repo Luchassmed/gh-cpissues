@@ -36,7 +36,7 @@ EOF
   }
 
   # Run your script with test parameters
-  /../gh-cpissues.sh test-repo --label test-label
+  ././gh-cpissues.sh test-repo --label test-label
 
   # Add assertions here if needed
   assertTrue "Expected file to exist" "[ -f /path/to/repo/commit_hash-body.tmp ]"
